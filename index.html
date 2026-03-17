@@ -440,71 +440,88 @@
             this.track1.loop = true;
             this.track2.loop = true;
             this.isPlaying = false;
+            this.ctx = null;
+            this.gainNode1 = null;
+            this.gainNode2 = null;
+            this.isInitialized = false;
+        }
+
+        init() {
+            if (this.isInitialized) return;
+            try {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const source1 = this.ctx.createMediaElementSource(this.track1);
+                this.gainNode1 = this.ctx.createGain();
+                source1.connect(this.gainNode1);
+                this.gainNode1.connect(this.ctx.destination);
+                this.gainNode1.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                const source2 = this.ctx.createMediaElementSource(this.track2);
+                this.gainNode2 = this.ctx.createGain();
+                source2.connect(this.gainNode2);
+                this.gainNode2.connect(this.ctx.destination);
+                this.gainNode2.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                this.isInitialized = true;
+            } catch (e) {
+                console.error("Web Audio API not supported:", e);
+            }
         }
 
         async toggle() {
             if (this.isPlaying) {
                 this.stop();
             } else {
-                this.play();
+                await this.play();
             }
         }
 
         async play() {
+            this.init();
+            if (!this.ctx) return;
+
+            if (this.ctx.state === 'suspended') {
+                await this.ctx.resume();
+            }
             this.isPlaying = true;
-            this.track1.volume = 0;
-            this.track2.volume = 0;
             
             // Detect mobile to lower rain volume even further
             const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
             const rainTargetVol = isMobile ? 0.002 : 0.005; 
             
             try {
+                // Ensure media elements are at full volume so GainNodes have full control
+                this.track1.volume = 1;
+                this.track2.volume = 1;
+
                 await this.track1.play();
                 await this.track2.play();
-                this.fadeIn(this.track1, 0.9, 2000);
-                this.fadeIn(this.track2, rainTargetVol, 10000);
+                this.fadeIn(this.gainNode1, 0.9, 2000);
+                this.fadeIn(this.gainNode2, rainTargetVol, 10000);
             } catch (e) {
                 console.error("Audio play failed:", e);
             }
         }
 
         stop() {
+            if (!this.isInitialized) return;
             this.isPlaying = false;
-            this.fadeOut(this.track1, 2000);
-            this.fadeOut(this.track2, 200);
+            this.fadeOut(this.gainNode1, 2000, () => this.track1.pause());
+            this.fadeOut(this.gainNode2, 200, () => this.track2.pause());
         }
 
-        fadeIn(audio, targetVol, duration) {
-            clearInterval(audio.fadeInterval);
-            const steps = 50;
-            const increment = targetVol / steps;
-            const intervalTime = duration / steps;
-            
-            audio.fadeInterval = setInterval(() => {
-                if (audio.volume < targetVol) {
-                    audio.volume = Math.min(targetVol, audio.volume + increment);
-                } else {
-                    clearInterval(audio.fadeInterval);
-                }
-            }, intervalTime);
+        fadeIn(gainNode, targetVol, durationMs) {
+            const timeConstant = durationMs / 1000 / 3;
+            gainNode.gain.setTargetAtTime(targetVol, this.ctx.currentTime, timeConstant);
         }
 
-        fadeOut(audio, duration) {
-            clearInterval(audio.fadeInterval);
-            const startVol = audio.volume;
-            const steps = 50;
-            const increment = startVol / steps;
-            const intervalTime = duration / steps;
-            
-            audio.fadeInterval = setInterval(() => {
-                if (audio.volume > 0) {
-                    audio.volume = Math.max(0, audio.volume - increment);
-                } else {
-                    clearInterval(audio.fadeInterval);
-                    audio.pause();
-                }
-            }, intervalTime);
+        fadeOut(gainNode, durationMs, callback) {
+            const timeConstant = durationMs / 1000 / 3;
+            gainNode.gain.setTargetAtTime(0, this.ctx.currentTime, timeConstant);
+            if (callback) {
+                setTimeout(callback, durationMs);
+            }
         }
     }
 
