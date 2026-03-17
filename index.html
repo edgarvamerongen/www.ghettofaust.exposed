@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHETTOFAUST | DJ Portfolio</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #ccc;
+            --font-family: 'Courier New', Courier, monospace;
+            --border-style: 1px dashed #666;
+            --thumb-width: 200px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+
+        a {
+            color: #fff;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        a:hover {
+            background-color: #ccc;
+            color: #000;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            white-space: pre;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-header .toggle-indicator {
+            display: inline-block;
+            width: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .category-content {
+            display: grid;
+            grid-template-columns: var(--thumb-width) 1fr;
+            column-gap: 30px;
+            row-gap: 40px;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        .category-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+
+        .item-thumbnail {
+            grid-column: 1;
+            width: 100%;
+        }
+
+        .item-thumbnail img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #333;
+        }
+
+        .item-content {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .item-title {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .item-description {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .embed-container {
+            margin-top: 10px;
+        }
+
+        .embed-container iframe[src*="soundcloud.com"] {
+            filter: invert(100%) hue-rotate(180deg) brightness(1.2) contrast(1.2);
+            transition: filter 0.3s ease;
+        }
+
+        .embed-container iframe[src*="soundcloud.com"]:hover {
+            filter: invert(100%) hue-rotate(180deg) brightness(1.4) contrast(1.4);
+        }
+
+        .embed-container iframe {
+            border: none;
+            width: 100%;
+        }
+
+        .ascii-divider {
+            grid-column: 1 / -1;
+            color: #444;
+            letter-spacing: 2px;
+            margin: 20px 0;
+            white-space: pre;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .spacer {
+            height: 40px;
+        }
+
+        .header pre {
+            font-size: 6px; /* Scale down for mobile */
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.1;
+            text-align: center;
+            display: inline-block;
+        }
+
+        @media (min-width: 601px) {
+            .header pre {
+                font-size: 8px;
+            }
+        }
+
+        /* Reveal Effect */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        input, textarea {
+            background-color: #000;
+            border: 1px dashed #666;
+            color: #ccc;
+            padding: 8px;
+            font-family: var(--font-family);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        button {
+            background-color: #000;
+            border: 1px solid #666;
+            color: #ccc;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: var(--font-family);
+            align-self: flex-start;
+        }
+
+        button:hover {
+            background-color: #ccc;
+            color: #000;
+        }
+
+        .success-message {
+            color: #0f0;
+            margin-top: 10px;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .category-content {
+                grid-template-columns: 1fr;
+            }
+            .item-thumbnail {
+                max-width: 300px;
+                margin: 0 auto;
+            }
+            .item-content {
+                grid-column: 1;
+            }
+            .section-header {
+                font-size: 1em;
+            }
+        }
+
+        #loading {
+            text-align: center;
+            margin: 50px;
+        }
+
+        /* Immersive Mode Styles */
+        #immersive-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0;
+            transition: opacity 16s ease-in-out;
+            background: linear-gradient(45deg, #1a0033, #330066, #1a0033);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #immersive-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 16s ease-in-out;
+            pointer-events: none;
+        }
+
+        .immersive-active #immersive-overlay,
+        .immersive-active #immersive-canvas {
+            opacity: 1;
+        }
+
+        .play-button {
+            position: absolute;
+            right: 40px;
+            top: 100px;
+            cursor: pointer;
+            font-size: 24px;
+            user-select: none;
+            transition: transform 0.5s ease, color 0.3s ease;
+            z-index: 100;
+            color: #666;
+            font-family: monospace;
+        }
+
+        .play-button:hover, .play-button.auto-spin {
+            transform: rotate(360deg) scale(1.2);
+            color: #fff;
+        }
+
+        .header {
+            position: relative;
+        }
+
+        /* Trivia Section */
+        .trivia-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 180px;
+            width: 180px;
+            perspective: 1000px;
+            position: absolute;
+            right: 60px;
+            bottom: -60px;
+            cursor: grab;
+            z-index: 10;
+        }
+
+        .trivia-section.dragging {
+            cursor: grabbing;
+        }
+
+        .post-it {
+            background: #fdfd86;
+            color: #333;
+            width: 180px;
+            height: 180px;
+            padding: 15px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.5);
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            user-select: none;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease;
+            font-family: var(--font-family);
+            transform: rotate(20deg);
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .post-it.faded {
+            opacity: 0.02;
+        }
+
+        .post-it.dragging {
+            cursor: grabbing;
+            z-index: 1000;
+            transition: none;
+        }
+
+        .post-it:nth-child(2n) { transform: rotate(23deg); }
+        .post-it:nth-child(3n) { transform: rotate(17deg); }
+        .post-it:nth-child(4n) { transform: rotate(21deg); }
+
+        .post-it::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 0 20px 20px;
+            border-color: transparent transparent var(--bg-color) transparent;
+        }
+
+        .post-it::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 20px 20px 0 0;
+            border-color: #d4d462 transparent transparent transparent;
+            z-index: 2;
+        }
+
+        .post-it-title {
+            font-weight: bold;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+
+        .post-it-text {
+            font-size: 0.7em;
+            line-height: 1.3;
+            overflow: hidden;
+        }
+
+        .post-it.fly-off {
+            transform: translate(600px, -600px) rotate(90deg) scale(0.2);
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="immersive-overlay"></div>
+<canvas id="immersive-canvas"></canvas>
+
+<div class="header">
+<pre>
+  GGGGGG   HH  HH   EEEEEE   TTTTTT   TTTTTT   OOOOOO   FFFFFF   AAAAAA   UU  UU   SSSSSS   TTTTTT  
+ GG        HH  HH   EE         TT       TT     OO  OO   FF       AA  AA   UU  UU   SS         TT    
+ GG  GGG   HHHHHH   EEEE       TT       TT     OO  OO   FFFF     AAAAAA   UU  UU   SSSSSS     TT    
+ GG   GG   HH  HH   EE         TT       TT     OO  OO   FF       AA  AA   UU  UU       SS     TT    
+  GGGGGG   HH  HH   EEEEEE     TT       TT     OOOOOO   FF       AA  AA    UUUU    SSSSSS     TT    
+</pre>
+<div class="play-button" id="immersive-toggle">( > )</div>
+</div>
+
+<div id="loading">Loading database...</div>
+<div class="container" id="main-container" style="display: none;"></div>
+
+<script>
+    class AudioController {
+        constructor() {
+            this.track1 = new Audio('going down 118bpm.wav');
+            this.track2 = new Audio('epic_rain_5min.mp3');
+            this.track1.loop = true;
+            this.track2.loop = true;
+            this.isPlaying = false;
+        }
+
+        async toggle() {
+            if (this.isPlaying) {
+                this.stop();
+            } else {
+                this.play();
+            }
+        }
+
+        async play() {
+            this.isPlaying = true;
+            this.track1.volume = 0;
+            this.track2.volume = 0;
+            try {
+                await this.track1.play();
+                await this.track2.play();
+                this.fadeIn(this.track1, 0.9, 2000);
+                this.fadeIn(this.track2, 0.025, 10000);
+            } catch (e) {
+                console.error("Audio play failed:", e);
+            }
+        }
+
+        stop() {
+            this.isPlaying = false;
+            this.fadeOut(this.track1, 2000);
+            this.fadeOut(this.track2, 200);
+        }
+
+        fadeIn(audio, targetVol, duration) {
+            clearInterval(audio.fadeInterval);
+            const steps = 50;
+            const increment = targetVol / steps;
+            const intervalTime = duration / steps;
+            
+            audio.fadeInterval = setInterval(() => {
+                if (audio.volume < targetVol) {
+                    audio.volume = Math.min(targetVol, audio.volume + increment);
+                } else {
+                    clearInterval(audio.fadeInterval);
+                }
+            }, intervalTime);
+        }
+
+        fadeOut(audio, duration) {
+            clearInterval(audio.fadeInterval);
+            const startVol = audio.volume;
+            const steps = 50;
+            const increment = startVol / steps;
+            const intervalTime = duration / steps;
+            
+            audio.fadeInterval = setInterval(() => {
+                if (audio.volume > 0) {
+                    audio.volume = Math.max(0, audio.volume - increment);
+                } else {
+                    clearInterval(audio.fadeInterval);
+                    audio.pause();
+                }
+            }, intervalTime);
+        }
+    }
+
+    class ParticleSystem {
+        constructor(canvas) {
+            this.canvas = canvas;
+            this.ctx = canvas.getContext('2d');
+            this.particles = [];
+            this.mouse = { x: -1000, y: -1000 };
+            
+            window.addEventListener('resize', () => this.resize());
+            window.addEventListener('mousemove', (e) => {
+                this.mouse.x = e.clientX;
+                this.mouse.y = e.clientY;
+            });
+            this.resize();
+            this.createParticles();
+            this.animate();
+        }
+
+        resize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+        }
+
+        createParticles() {
+            this.particles = [];
+            // Rain
+            for (let i = 0; i < 150; i++) {
+                this.particles.push({
+                    type: 'rain',
+                    x: Math.random() * this.canvas.width,
+                    y: Math.random() * this.canvas.height,
+                    speed: 2 + Math.random() * 5,
+                    char: ['|', '/', '\\', '.', ':', "'"][Math.floor(Math.random() * 6)],
+                    size: 10 + Math.random() * 10
+                });
+            }
+            // Clouds
+            for (let i = 0; i < 10; i++) {
+                this.particles.push({
+                    type: 'cloud',
+                    x: Math.random() * this.canvas.width,
+                    y: Math.random() * this.canvas.height,
+                    speed: 0.2 + Math.random() * 0.5,
+                    char: '~~~',
+                    size: 20 + Math.random() * 30
+                });
+            }
+        }
+
+        animate() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = 'rgba(204, 204, 204, 0.4)';
+            
+            this.particles.forEach(p => {
+                if (p.type === 'rain') {
+                    p.y += p.speed;
+                    if (p.y > this.canvas.height) p.y = -20;
+                } else {
+                    p.x += p.speed;
+                    if (p.x > this.canvas.width) p.x = -100;
+                }
+
+                const dx = this.mouse.x - p.x;
+                const dy = this.mouse.y - p.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 150) {
+                    const angle = Math.atan2(dy, dx);
+                    const force = (150 - dist) / 150;
+                    p.x -= Math.cos(angle) * force * 5;
+                    p.y -= Math.sin(angle) * force * 5;
+                }
+
+                this.ctx.font = `${p.size}px monospace`;
+                this.ctx.fillText(p.char, p.x, p.y);
+            });
+
+            requestAnimationFrame(() => this.animate());
+        }
+    }
+
+    const audioController = new AudioController();
+    let particleSystem = null;
+
+    document.getElementById('immersive-toggle').onclick = function() {
+        const isActive = document.body.classList.toggle('immersive-active');
+        this.textContent = isActive ? '( || )' : '( > )';
+        audioController.toggle();
+        if (isActive && !particleSystem) {
+            particleSystem = new ParticleSystem(document.getElementById('immersive-canvas'));
+        }
+    };
+
+    const CATEGORIES_ORDER = ['music', 'mixes'];
+    const container = document.getElementById('main-container');
+    const loading = document.getElementById('loading');
+
+    function parseDate(dateStr) {
+        if (!dateStr || typeof dateStr !== 'string' || dateStr.length !== 8) return 0;
+        const day = dateStr.substring(0, 2);
+        const month = dateStr.substring(2, 4);
+        const year = dateStr.substring(4, 8);
+        return parseInt(year + month + day);
+    }
+
+    async function fetchData() {
+        try {
+            const manifestResponse = await fetch('vault/manifest.json');
+            if (!manifestResponse.ok) throw new Error('Manifest not found');
+            const manifest = await manifestResponse.json();
+
+            const itemsPromises = manifest.items.map(async (path) => {
+                const response = await fetch(`vault/${path}/template.json`);
+                if (!response.ok) throw new Error(`Template not found for ${path}`);
+                const data = await response.json();
+                return { ...data, path };
+            });
+
+            const items = await Promise.all(itemsPromises);
+
+            // Fetch trivia facts
+            const triviaResponse = await fetch('vault/trivia.json');
+            const triviaFacts = triviaResponse.ok ? await triviaResponse.json() : [];
+            
+            loading.style.display = 'none';
+            container.style.display = 'flex';
+
+            renderBio(triviaFacts);
+            renderItems(items);
+            renderQuestions();
+            
+            setTimeout(() => {
+                document.querySelectorAll('.category-content').forEach(content => {
+                    content.style.maxHeight = "none";
+                });
+            }, 100);
+
+            initReveal();
+
+            // Auto-spin play button once after 1s delay
+            setTimeout(() => {
+                const btn = document.getElementById('immersive-toggle');
+                btn.classList.add('auto-spin');
+                setTimeout(() => btn.classList.remove('auto-spin'), 1000);
+            }, 1000);
+        } catch (error) {
+            console.error('Error loading data:', error);
+            loading.innerHTML = `Error loading database.<br><small>${error.message}</small>`;
+        }
+    }
+
+    function renderBio(triviaFacts) {
+        const cat = 'bio';
+        const catName = 'BIO';
+        
+        const header = document.createElement('div');
+        header.className = 'section-header reveal';
+        header.innerHTML = `<span class="toggle-indicator">-</span> [ ${catName} ]${'-'.repeat(40 - catName.length)}`;
+        header.onclick = () => toggleCategory(cat);
+        container.appendChild(header);
+
+        const catContent = document.createElement('div');
+        catContent.id = `cat-content-${cat}`;
+        catContent.className = 'category-content';
+        container.appendChild(catContent);
+
+        // Thumbnail
+        const thumbDiv = document.createElement('div');
+        thumbDiv.className = 'item-thumbnail reveal';
+        thumbDiv.innerHTML = `<img src="assets/bio.jpg" alt="BIO">`;
+        catContent.appendChild(thumbDiv);
+
+        // Content
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'item-content reveal';
+        
+        contentDiv.innerHTML = `
+            <div class="item-title">BIO [2026]</div>
+            <div class="item-description">
+                Im a music producer from Gelderland - NL. I make music I feel like making. Maybe there is something here for you! Give me a follow on bandcamp 
+                if you're interested in future work, or subscribe to the mailing list! I'm also involved in organising Calor Events. 
+                Yes, the only future-driven and truly unique house-event in Western Europe.
+            </div>
+            <div style="margin-top: 15px; position: relative;" id="mailing-list-area">
+                <div class="item-title">subscribe to my mailinglist here!</div>
+                <form action="https://formspree.io/f/xeerkppw" method="POST" onsubmit="handleFormSubmit(event, 'bio-success')">
+                    <input type="email" name="email" placeholder="Your email address" required 
+                        onfocus="document.getElementById('trivia-gimmick').querySelectorAll('.post-it').forEach(p => p.classList.add('faded'))"
+                        onblur="document.getElementById('trivia-gimmick').querySelectorAll('.post-it').forEach(p => p.classList.remove('faded'))">
+                    <button type="submit">Subscribe</button>
+                    <div id="bio-success" class="success-message">Thanks!</div>
+                </form>
+            </div>
+        `;
+        catContent.appendChild(contentDiv);
+
+        // Trivia Gimmick
+        if (triviaFacts && triviaFacts.length > 0) {
+            const mailingListArea = contentDiv.querySelector('#mailing-list-area');
+            const triviaSection = document.createElement('div');
+            triviaSection.id = 'trivia-gimmick';
+            triviaSection.className = 'trivia-section';
+            mailingListArea.appendChild(triviaSection);
+
+            const shuffledFacts = [...triviaFacts].sort(() => Math.random() - 0.5);
+            
+            const createPostIt = (text) => {
+                const el = document.createElement('div');
+                el.className = 'post-it';
+                el.innerHTML = `
+                    <div class="post-it-title">Did you know..</div>
+                    <div class="post-it-text">${text}</div>
+                `;
+                return el;
+            };
+
+            shuffledFacts.forEach(fact => {
+                triviaSection.appendChild(createPostIt(fact));
+            });
+
+            // Container-based dragging
+            let isDragging = false;
+            let startX, startY;
+            let initialRight, initialBottom;
+            let moved = false;
+
+            const onStart = (e) => {
+                isDragging = true;
+                moved = false;
+                const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+                startX = clientX;
+                startY = clientY;
+                
+                const style = window.getComputedStyle(triviaSection);
+                initialRight = parseFloat(style.right) || 0;
+                initialBottom = parseFloat(style.bottom) || 0;
+                
+                triviaSection.classList.add('dragging');
+                
+                if (e.type === 'mousedown') {
+                    window.addEventListener('mousemove', onMove);
+                    window.addEventListener('mouseup', onEnd);
+                } else {
+                    window.addEventListener('touchmove', onMove, { passive: false });
+                    window.addEventListener('touchend', onEnd);
+                }
+                if (e.cancelable) e.preventDefault();
+            };
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+                
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+                
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    moved = true;
+                }
+
+                triviaSection.style.right = `${initialRight - dx}px`;
+                triviaSection.style.bottom = `${initialBottom - dy}px`;
+                
+                if (e.cancelable) e.preventDefault();
+            };
+
+            const onEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                triviaSection.classList.remove('dragging');
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onEnd);
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('touchend', onEnd);
+
+                if (!moved) {
+                    const postIts = triviaSection.querySelectorAll('.post-it:not(.fly-off)');
+                    if (postIts.length > 0) {
+                        const topPostIt = postIts[postIts.length - 1];
+                        topPostIt.classList.add('fly-off');
+                        setTimeout(() => topPostIt.remove(), 600);
+                    }
+                }
+            };
+
+            triviaSection.addEventListener('mousedown', onStart);
+            triviaSection.addEventListener('touchstart', onStart, { passive: false });
+        }
+
+        const divider = document.createElement('div');
+        divider.className = 'ascii-divider reveal';
+        divider.textContent = '+' + '-'.repeat(78) + '+';
+        catContent.appendChild(divider);
+
+        const spacer = document.createElement('div');
+        spacer.className = 'spacer';
+        container.appendChild(spacer);
+    }
+
+    function renderQuestions() {
+        const cat = 'questions';
+        const catName = 'QUESTIONS';
+        
+        const header = document.createElement('div');
+        header.className = 'section-header reveal';
+        header.innerHTML = `<span class="toggle-indicator">-</span> [ ${catName} ]${'-'.repeat(40 - catName.length)}`;
+        header.onclick = () => toggleCategory(cat);
+        container.appendChild(header);
+
+        const catContent = document.createElement('div');
+        catContent.id = `cat-content-${cat}`;
+        catContent.className = 'category-content';
+        container.appendChild(catContent);
+
+        // Content (Empty thumbnail for questions to match layout)
+        const thumbDiv = document.createElement('div');
+        thumbDiv.className = 'item-thumbnail reveal';
+        catContent.appendChild(thumbDiv);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'item-content reveal';
+        
+        contentDiv.innerHTML = `
+            <div class="item-title">GET IN TOUCH</div>
+            <form action="https://formspree.io/f/xkoqbpkn" method="POST" onsubmit="handleFormSubmit(event, 'questions-success')">
+                <input type="email" name="email" placeholder="Your Email" required>
+                <textarea name="message" placeholder="Your Message" rows="4" required></textarea>
+                <button type="submit">Send</button>
+                <div id="questions-success" class="success-message">Thanks!</div>
+            </form>
+        `;
+        catContent.appendChild(contentDiv);
+
+        const divider = document.createElement('div');
+        divider.className = 'ascii-divider reveal';
+        divider.textContent = '+' + '-'.repeat(78) + '+';
+        catContent.appendChild(divider);
+    }
+
+    async function handleFormSubmit(event, successId) {
+        event.preventDefault();
+        const form = event.target;
+        const data = new FormData(form);
+        const button = form.querySelector('button');
+        const originalText = button.textContent;
+        button.textContent = 'Sending...';
+        button.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: data,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            if (response.ok) {
+                form.reset();
+                document.getElementById(successId).style.display = 'block';
+                
+                // Ensure trivia is visible
+                if (successId === 'bio-success') {
+                    const gimmick = document.getElementById('trivia-gimmick');
+                    if (gimmick) {
+                        gimmick.querySelectorAll('.post-it').forEach(p => p.classList.remove('faded'));
+                    }
+                }
+
+                button.textContent = originalText;
+                button.disabled = false;
+                setTimeout(() => {
+                    document.getElementById(successId).style.display = 'none';
+                }, 5000);
+            } else {
+                throw new Error('Submission failed');
+            }
+        } catch (error) {
+            alert('Oops! There was a problem submitting your form');
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    }
+    
+    function renderItems(items) {
+        const grouped = {};
+        items.forEach(item => {
+            if (!grouped[item.category]) grouped[item.category] = [];
+            grouped[item.category].push(item);
+        });
+
+        CATEGORIES_ORDER.forEach((cat, index) => {
+            if (grouped[cat]) {
+                const catName = cat.toUpperCase();
+                
+                // Section Header
+                const header = document.createElement('div');
+                header.className = 'section-header reveal';
+                header.innerHTML = `<span class="toggle-indicator">-</span> [ ${catName} ]${'-'.repeat(40 - catName.length)}`;
+                header.onclick = () => toggleCategory(cat);
+                container.appendChild(header);
+
+                // Category Content Container
+                const catContent = document.createElement('div');
+                catContent.id = `cat-content-${cat}`;
+                catContent.className = 'category-content';
+                container.appendChild(catContent);
+
+                // Sort items by date (newest first)
+                grouped[cat].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+
+                grouped[cat].forEach(item => {
+                    renderItem(item, catContent);
+                });
+
+                // Add spacer
+                const spacer = document.createElement('div');
+                spacer.className = 'spacer';
+                container.appendChild(spacer);
+            }
+        });
+    }
+
+    function toggleCategory(cat) {
+        const content = document.getElementById(`cat-content-${cat}`);
+        const header = content.previousElementSibling;
+        const indicator = header.querySelector('.toggle-indicator');
+        
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            content.style.maxHeight = content.scrollHeight + "px";
+            indicator.textContent = '-';
+            setTimeout(() => {
+                if (!content.classList.contains('collapsed')) {
+                    content.style.maxHeight = "none";
+                }
+            }, 500);
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+            content.offsetHeight;
+            setTimeout(() => {
+                content.classList.add('collapsed');
+            }, 10);
+            indicator.textContent = '+';
+        }
+    }
+
+    function renderItem(item, parent) {
+        const thumbDiv = document.createElement('div');
+        thumbDiv.className = 'item-thumbnail reveal';
+        const folderName = item.path.split('/').pop();
+        const imgPath = `vault/${item.path}/${folderName}.jpg`;
+        thumbDiv.innerHTML = `<img src="${imgPath}" alt="${folderName}" onerror="this.style.display='none'">`;
+        parent.appendChild(thumbDiv);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'item-content reveal';
+        
+        let title = "";
+        if (item.release_id) {
+            title += `[${item.release_id}] - `;
+        }
+        title += `${item.name || ''} [${item.year || 'N/A'}]`;
+
+        let html = `
+            <div class="item-title">${title}</div>
+            <div class="item-description">${item.description}</div>
+        `;
+
+        const addresses = Array.isArray(item.web_address) ? item.web_address : [item.web_address];
+        
+        addresses.forEach(addr => {
+            if (addr) {
+                if (addr.includes('soundcloud.com')) {
+                    html += `
+                        <div class="embed-container">
+                            <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" 
+                                src="https://w.soundcloud.com/player/?url=${encodeURIComponent(addr)}&color=%23000000&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false&show_artwork=false">
+                            </iframe>
+                        </div>
+                    `;
+                } else if (addr.includes('bandcamp.com/EmbeddedPlayer')) {
+                    let bandcampAddr = addr;
+                    if (!bandcampAddr.includes('bgcol=333333')) {
+                        if (bandcampAddr.includes('bgcol=')) {
+                            bandcampAddr = bandcampAddr.replace(/bgcol=[^/]+/, 'bgcol=333333');
+                        } else {
+                            bandcampAddr = bandcampAddr.replace('/EmbeddedPlayer/', '/EmbeddedPlayer/bgcol=333333/');
+                        }
+                    }
+                    html += `
+                        <div class="embed-container">
+                            <iframe style="border: 0; width: 100%; height: 274px;" src="${bandcampAddr}" seamless></iframe>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        if (item.youtube_url) {
+            html += `
+                <div class="embed-container">
+                    <a href="${item.youtube_url}" target="_blank">>> WATCH ON YOUTUBE</a>
+                </div>
+            `;
+        }
+
+        contentDiv.innerHTML = html;
+        parent.appendChild(contentDiv);
+
+        const divider = document.createElement('div');
+        divider.className = 'ascii-divider reveal';
+        divider.textContent = '+' + '-'.repeat(78) + '+';
+        parent.appendChild(divider);
+    }
+
+    function initReveal() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+    }
+
+    fetchData();
+</script>
+
+</body>
+</html>
